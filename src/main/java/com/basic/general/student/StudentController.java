@@ -19,22 +19,22 @@ public class StudentController {
     }
 
     @GetMapping
-    public List<Student> findAll() {
+    public ResponseEntity<ApiResponse<List<Student>>> findAll() {
         return studentService.findAll();
     }
 
     @PostMapping
-    public ResponseEntity<ApiResponse<Object>> create(@RequestBody Student student) {
+    public ResponseEntity<ApiResponse<Student>> create(@RequestBody Student student) {
         return studentService.create(student);
     }
 
     @DeleteMapping(path = "{studentId}")
-    public String delete(@PathVariable long studentId) {
+    public ResponseEntity<ApiResponse<String>> delete(@PathVariable long studentId) {
         return studentService.delete(studentId);
     }
 
     @PutMapping(path = "{studentId}")
-    public Student update(
+    public ResponseEntity<ApiResponse<Student>> update(
             @PathVariable long studentId,
             @RequestBody Student updateData) {
         return studentService.update(studentId, updateData);

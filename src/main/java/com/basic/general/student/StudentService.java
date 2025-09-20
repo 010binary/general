@@ -21,37 +21,45 @@ public class StudentService {
         this.studentRepository = studentRepository;
     }
 
-    public List<Student> findAll() {
-        return studentRepository.findAll();
+    public ResponseEntity<ApiResponse<List<Student>>> findAll() {
+        List<Student> students = studentRepository.findAll();
+        return ResponseEntity.ok(ApiResponse.success("Students retrieved successfully", students));
     }
 
-    public ResponseEntity<ApiResponse<Object>> create(Student student) {
+    public ResponseEntity<ApiResponse<Student>> create(Student student) {
         Optional<Student> studentExist = studentRepository.findStudentByEmail(student.getEmail());
 
         if (studentExist.isPresent())
             return ResponseEntity.status(HttpStatus.CONFLICT)
-                .body(ApiResponse.error("Email is already in use"));
+                    .body(ApiResponse.error("Email is already in use"));
 
-        studentRepository.save(student);
+        Student savedStudent = studentRepository.save(student);
         return ResponseEntity.status(HttpStatus.CREATED)
-            .body(ApiResponse.success("Student created successfully", student));
+                .body(ApiResponse.success("Student created successfully", savedStudent));
     }
 
-    public String delete(long studentId) {
+    public ResponseEntity<ApiResponse<String>> delete(long studentId) {
         boolean studentExist = studentRepository.existsById(studentId);
 
         if (!studentExist)
-            throw new IllegalStateException("Student Doesn't exist");
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(ApiResponse.error("Student doesn't exist"));
 
         studentRepository.deleteById(studentId);
 
-        return "Deleted successfully";
+        return ResponseEntity.ok(ApiResponse.success("Student deleted successfully", "Deleted successfully"));
     }
 
     @Transactional
-    public Student update(long studentId, Student updateData) {
-        Student existingStudent = studentRepository.findById(studentId)
-                .orElseThrow(() -> new IllegalStateException("Student with id " + studentId + " doesn't exist"));
+    public ResponseEntity<ApiResponse<Student>> update(long studentId, Student updateData) {
+        Optional<Student> existingStudentOpt = studentRepository.findById(studentId);
+
+        if (existingStudentOpt.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(ApiResponse.error("Student with id " + studentId + " doesn't exist"));
+        }
+
+        Student existingStudent = existingStudentOpt.get();
 
         // Update name if provided
         if (updateData.getName() != null && !updateData.getName().trim().isEmpty()) {
@@ -64,7 +72,8 @@ public class StudentService {
                 // Check if the new email is already in use by another student
                 Optional<Student> studentWithEmail = studentRepository.findStudentByEmail(updateData.getEmail());
                 if (studentWithEmail.isPresent()) {
-                    throw new IllegalStateException("Email is already in use by another student");
+                    return ResponseEntity.status(HttpStatus.CONFLICT)
+                            .body(ApiResponse.error("Email is already in use by another student"));
                 }
                 existingStudent.setEmail(updateData.getEmail());
             }
@@ -77,6 +86,6 @@ public class StudentService {
 
         // No need to explicitly save since we're using @Transactional
         // The changes will be automatically persisted when the transaction commits
-        return existingStudent;
+        return ResponseEntity.ok(ApiResponse.success("Student updated successfully", existingStudent));
     }
 }
