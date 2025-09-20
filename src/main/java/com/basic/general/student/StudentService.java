@@ -2,7 +2,11 @@ package com.basic.general.student;
 
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+
+import com.basic.general.response.ApiResponse;
 
 import java.util.List;
 import java.util.Optional;
@@ -21,13 +25,16 @@ public class StudentService {
         return studentRepository.findAll();
     }
 
-    public Student create(Student student) {
+    public ResponseEntity<ApiResponse<Object>> create(Student student) {
         Optional<Student> studentExist = studentRepository.findStudentByEmail(student.getEmail());
 
         if (studentExist.isPresent())
-            throw new IllegalStateException("Email is already in use");
+            return ResponseEntity.status(HttpStatus.CONFLICT)
+                .body(ApiResponse.error("Email is already in use"));
 
-        return studentRepository.save(student);
+        studentRepository.save(student);
+        return ResponseEntity.status(HttpStatus.CREATED)
+            .body(ApiResponse.success("Student created successfully", student));
     }
 
     public String delete(long studentId) {

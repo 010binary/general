@@ -1,7 +1,10 @@
 package com.basic.general.student;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
+import com.basic.general.response.ApiResponse;
 
 import java.util.List;
 
@@ -21,7 +24,7 @@ public class StudentController {
     }
 
     @PostMapping
-    public Student create(@RequestBody Student student) {
+    public ResponseEntity<ApiResponse<Object>> create(@RequestBody Student student) {
         return studentService.create(student);
     }
 
